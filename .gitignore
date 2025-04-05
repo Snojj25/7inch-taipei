@@ -1,0 +1,3 @@
+.env
+*.py
+node_modules

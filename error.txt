@@ -1,0 +1,13 @@
+privateKey:  0x7c8d4fdb6465a68550a9e8c8083e021fffe206e0189be1b02554398ea19bf672
+rpc:  https://10.rpc.thirdweb.com/jp56eCeFJrm0MmSDUt5xNgXrwZBrROPJf4pmSLpu2eeNZfPg6AqreJMgd00rYm6pylyruNgkKmTLHVyg7LykEw
+authKey:  kcY2YqJmdjnjwXb3wS5BE4jLRSTSO05o
+source:  7inch-taipei
+makerAddress:  0x93998AB1fC2D04fB7A1430073FD95434067F57e1
+privateKey:  0x7c8d4fdb6465a68550a9e8c8083e021fffe206e0189be1b02554398ea19bf672
+data:  0x7c8d4fdb6465a68550a9e8c8083e021fffe206e0189be1b02554398ea19bf672
+data:  72f8a0c8c415454f629c
+data:  337e8b4ad3568eb9fd2e
+data:  0x14e210d3
+{
+  hash: '0x036264a86c92c98b002e615c44ce06f342f367d4d3bde7600c1ec16f9abc19b6'
+} order created
