@@ -85,7 +85,8 @@ def execute_bridge_plan():
                 enriched_sources.append({
                     "token": source["token"],
                     "chain": source["chain"],
-                    "amount": balance["scaledBalance"]
+                    "amount": balance["scaledBalance"],
+                    "float_amount": balance["balance"]
                 })
                 break
     
@@ -114,7 +115,8 @@ def execute_bridge_plan():
         
         return jsonify({
             "response": enriched_plan,
-            "execution_status": nodejs_response.json()["message"]
+            "execution_status": nodejs_response.json()["message"],
+            "order_hashes": nodejs_response.json()["orderHashes"]
         }), 201
     except requests.exceptions.RequestException as e:
         return jsonify({

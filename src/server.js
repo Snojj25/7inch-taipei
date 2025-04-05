@@ -26,19 +26,21 @@ app.post("/api/execute_plan", async (req, res) => {
   console.log("Sources: ", sources);
   console.log("Destination: ", destination);
 
-  executePlan(sources, destination).catch((error) => {
+  try {
+    const orderHashes = await executePlan(sources, destination);
+    console.log("Plan executed successfully");
+    res.status(201).json({
+      success: true,
+      message: "Plan executed successfully",
+      orderHashes,
+    });
+  } catch (error) {
     console.error("Error: ", error);
     res.status(500).json({
       success: false,
       message: "Error executing plan",
     });
-  });
-
-  res.status(201).json({
-    success: true,
-    message: "Plan executed successfully",
-    result,
-  });
+  }
 });
 
 // Start the server

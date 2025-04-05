@@ -95,7 +95,9 @@ async function executePlan(sources, destination) {
 
   console.log("111111111111111111111");
 
-  const swapPromises = sources.map((source) => {
+  const txhashes = [];
+
+  const swapPromises = sources.map(async (source) => {
     let { token, chain, amount } = source;
     const srcTokenAddress = getTokenAddress(token, chain);
     const srcAmount = 100000; // amount;
@@ -107,21 +109,25 @@ async function executePlan(sources, destination) {
 
     console.log("approving tokens for source: ", srcTokenAddress);
 
-    return approveTokens(chain, srcTokenAddress).then(() => {
-      console.log("Executing swap for source: ", source);
+    await approveTokens(chain, srcTokenAddress);
+    console.log("Executing swap for source: ", source);
 
-      return executeSwap(
-        sdk,
-        srcChainId,
-        dstChainId,
-        srcTokenAddress,
-        dstTokenAddress,
-        srcAmount
-      );
-    });
+    hash = await executeSwap(
+      sdk,
+      srcChainId,
+      dstChainId,
+      srcTokenAddress,
+      dstTokenAddress,
+      srcAmount
+    );
+
+    txhashes.push(hash);
+    return hash;
   });
 
   await Promise.all(swapPromises);
+
+  return txhashes;
 }
 
 const approveABI = [
@@ -264,7 +270,7 @@ async function executeSwap(
           if (order.status == "executed") {
             console.log(`Order is complete. Exiting.`);
             clearInterval(intervalId);
-            resolve();
+            resolve(orderHash);
             return;
           }
 
