@@ -15,8 +15,10 @@ function getRandomBytes32() {
 
 const makerPrivateKey = process?.WALLET_KEY;
 const makerAddress = process?.WALLET_ADDRESS;
-const nodeUrl = process?.RPC_URL; // suggested for ethereum https://eth.llamarpc.com
+const nodeUrl = process?.RPC_URL_ARB;
 const devPortalApiKey = process?.DEV_PORTAL_KEY;
+
+console.log(makerPrivateKey, makerAddress, nodeUrl, devPortalApiKey);
 
 // Validate environment variables
 if (!makerPrivateKey || !makerAddress || !nodeUrl || !devPortalApiKey) {
@@ -26,16 +28,20 @@ if (!makerPrivateKey || !makerAddress || !nodeUrl || !devPortalApiKey) {
 const web3Instance = new Web3(nodeUrl);
 const blockchainProvider = new PrivateKeyProviderConnector(makerPrivateKey, web3Instance);
 
+console.log("HELLo 1111")
+
 const sdk = new SDK({
     url: 'https://api.1inch.dev/fusion-plus',
     authKey: devPortalApiKey,
     blockchainProvider
 });
 
+console.log("HELLo 2222")
+
 let srcChainId = NetworkEnum.ARBITRUM;
-let dstChainId = NetworkEnum.COINBASE;
+let dstChainId = NetworkEnum.OPTIMISM;
 let srcTokenAddress = '0xaf88d065e77c8cC2239327C5EDb3A432268e5831';
-let dstTokenAddress = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
+let dstTokenAddress = '0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85';
 
 const approveABI = [{
     "constant": false,
@@ -52,6 +58,7 @@ const approveABI = [{
 
 (async () => {
 
+    console.log("HELLo 3333")
 
     const invert = false;
 
@@ -80,7 +87,7 @@ const approveABI = [{
         dstChainId,
         srcTokenAddress,
         dstTokenAddress,
-        amount: '1000000',
+        amount: '100000',  // 0.1 USDC
         enableEstimate: true,
         walletAddress: makerAddress
     };
