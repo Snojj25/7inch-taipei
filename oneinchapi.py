@@ -20,8 +20,8 @@ def get_token_balances(wallet_address, chain_id):
 
 CHAINS = [{"name": "Optimism", "chainId": 10}, 
           {"name": "Base", "chainId": 8453}, 
-          {"name": "Arbitrum", "chainId": 42161}, 
-          {"name": "ZK Sync", "chainId": 324},
+          {"name": "Arbitrum", "chainId": 42161},
+          {"name": "Linea", "chainId": 59144},
           {"name": "Ethereum", "chainId": 1}]
 
 TOKENS_DECIMALS = {
@@ -29,19 +29,21 @@ TOKENS_DECIMALS = {
     "0x4200000000000000000000000000000000000006": 18.0,
     "0xaf88d065e77c8cc2239327c5edb3a432268e5831": 6.0,
     "0x0b2c639c533813f4aa9d7837caf62653d097ff85": 6.0,
+    "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913": 6.0,
+    "0x176211869ca2b568f2a7d4ee941e073a821ee1ff": 6.0,
 }
 
 TOKENS_NAMES = {
     "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee": "ETH", # AR and OP
-    "0x4200000000000000000000000000000000000006": "WETH", # ARB and OP
+    "0x4200000000000000000000000000000000000006": "WETH", # ARB and OP and Base
     "0xaf88d065e77c8cc2239327c5edb3a432268e5831": "USDC", # ARB
     "0x0b2c639c533813f4aa9d7837caf62653d097ff85": "USDC", # OP
+    "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913": "USDC", # Base
+    "0x176211869ca2b568f2a7d4ee941e073a821ee1ff": "USDC", # Linea
 }
 
 
-
-
-def fetch_balances(wallet_address):    
+def fetch_balances(wallet_address):
     chain_balances = {}
     for chain in CHAINS:
         token_balances = get_token_balances(wallet_address, chain["chainId"])  
@@ -54,7 +56,9 @@ def fetch_balances(wallet_address):
                 token = token.lower()
                 balance = float(balance)
                 if balance > 0:
-                    token_name = TOKENS_NAMES[token] if token in TOKENS_NAMES else token
+                    if token not in TOKENS_NAMES:
+                        continue
+                    token_name = TOKENS_NAMES[token]
                     balances.append({"tokenName": token_name, 
                                      "balance": balance / 10**TOKENS_DECIMALS[token], 
                                      "scaledBalance": balance})

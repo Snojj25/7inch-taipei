@@ -32,6 +32,8 @@ Instructions:
 - Select the most accurate and narrow category
 - Ignore greetings or fluff in the sentence
 - If ambiguous, default to CONVERSATIONAL
+- The valid chains are: "Arbitrum", "Optimism", "Base", "Linea", fix any typos or case sensitivity
+- The valid tokens are: "ETH", and "USDC", fix any typos or case sensitivity
 """
 
 
@@ -194,12 +196,15 @@ class SemanticRouter:
         elif semantic_category == "TOKEN_BRIDGE_PLAN":
             system_prompt = TOKEN_BRIDGE_PLAN
         elif semantic_category == "FIND_BALANCES":
+            system_prompt = FIND_BALANCES
             
             balances_info = fetch_balances(wallet_address)
-            user_message = f"{balances_info}"
-            print("Balances info: ", balances_info)
 
-            system_prompt = FIND_BALANCES
+            return balances_info, system_prompt
+            # user_message = f"{balances_info}"
+            # print("Balances info: ", balances_info)
+
+            # system_prompt = FIND_BALANCES
         elif semantic_category == "CONVERSATIONAL":
             system_prompt = CONVERSATIONAL
         else:

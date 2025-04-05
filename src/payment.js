@@ -16,6 +16,7 @@ const {
   Contract,
   Wallet,
   JsonRpcProvider,
+  ethers,
 } = require("ethers");
 
 // TODO write formal bug for this function being inaccessible
@@ -26,8 +27,11 @@ function getRandomBytes32() {
 
 const makerPrivateKey = process?.WALLET_KEY;
 const makerAddress = process?.WALLET_ADDRESS;
+
 const arbNodeUrl = process?.RPC_URL_ARB;
 const opNodeUrl = process?.RPC_URL_OP;
+const baseNodeUrl = process?.BASE_RPC_URL;
+const lineaNodeUrl = process?.RPC_URL_LINEA;
 
 const devPortalApiKey = process?.DEV_PORTAL_KEY;
 
@@ -37,6 +41,8 @@ if (
   !makerAddress ||
   !arbNodeUrl ||
   !opNodeUrl ||
+  !baseNodeUrl ||
+  !lineaNodeUrl ||
   !devPortalApiKey
 ) {
   throw new Error(
@@ -45,7 +51,24 @@ if (
 }
 
 function getSDKForNetwork(network) {
-  const nodeUrl = network == "Arbitrum" ? arbNodeUrl : opNodeUrl;
+  let nodeUrl;
+  switch (network) {
+    case "Arbitrum":
+      nodeUrl = arbNodeUrl;
+      break;
+    case "Optimism":
+      nodeUrl = opNodeUrl;
+      break;
+    case "Base":
+      nodeUrl = baseNodeUrl;
+      break;
+    case "Linea":
+      nodeUrl = lineaNodeUrl;
+      break;
+    default:
+      throw new Error("Unsupported network: " + network);
+  }
+
   const web3Instance = new Web3(nodeUrl);
   const blockchainProvider = new PrivateKeyProviderConnector(
     makerPrivateKey,
@@ -62,55 +85,91 @@ function getSDKForNetwork(network) {
 }
 
 function getNetworkEnumForChain(chain) {
-  return chain == "Arbitrum" ? NetworkEnum.ARBITRUM : NetworkEnum.OPTIMISM;
-}
-
-// TOKENS_NAMES = {
-//     "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee": "ETH", # AR and OP
-//     "0x4200000000000000000000000000000000000006": "WETH", # ARB and OP
-//     "0xaf88d065e77c8cc2239327c5edb3a432268e5831": "USDC", # ARB
-//     "0x0b2c639c533813f4aa9d7837caf62653d097ff85": "USDC", # OP
-// }
-function getTokenAddress(tokenName, chain) {
-  if (chain == "Arbitrum") {
-    return tokenName == "WETH"
-      ? "0x4200000000000000000000000000000000000006"
-      : "0xaf88d065e77c8cc2239327c5edb3a432268e5831";
-  } else {
-    return tokenName == "WETH"
-      ? "0x4200000000000000000000000000000000000006"
-      : "0x0b2c639c533813f4aa9d7837caf62653d097ff85";
+  switch (chain) {
+    case "Arbitrum":
+      return NetworkEnum.ARBITRUM;
+    case "Optimism":
+      return NetworkEnum.OPTIMISM;
+    case "Base":
+      return NetworkEnum.COINBASE;
+    case "Linea":
+      return NetworkEnum.LINEA;
+    default:
+      throw new Error("Unsupported chain: " + chain);
   }
 }
 
-// let srcChainId = NetworkEnum.ARBITRUM;
-// let dstChainId = NetworkEnum.OPTIMISM;
-// let srcTokenAddress = "0xaf88d065e77c8cC2239327C5EDb3A432268e5831";
-// let dstTokenAddress = "0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85";
+// TOKENS_NAMES = {
+//     "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee": "ETH",    // Native ETH on all chains
+//     "0x4200000000000000000000000000000000000006": "WETH",   // WETH on ARB, OP, Base
+//     "0xe5D7C2a44FfDDf6b295A15c148167daaAf5Cf34f": "WETH",   // WETH on Linea
+//     "0xaf88d065e77c8cc2239327c5edb3a432268e5831": "USDC",   // USDC on ARB
+//     "0x0b2c639c533813f4aa9d7837caf62653d097ff85": "USDC",   // USDC on OP
+//     "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913": "USDC",   // USDC on Base
+//     "0x176211869ca2b568f2a7d4ee941e073a821ee1ff": "USDC"    // USDC on Linea
+// }
+function getTokenAddress(tokenName, chain) {
+  if (tokenName == "ETH") {
+    return "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee";
+  }
+
+  if (tokenName == "WETH") {
+    switch (chain) {
+      case "Arbitrum":
+      case "Optimism":
+      case "Base":
+        return "0x4200000000000000000000000000000000000006";
+      case "Linea":
+        return "0xe5D7C2a44FfDDf6b295A15c148167daaAf5Cf34f";
+      default:
+        throw new Error("Unsupported chain for WETH: " + chain);
+    }
+  }
+
+  if (tokenName == "USDC") {
+    switch (chain) {
+      case "Arbitrum":
+        return "0xaf88d065e77c8cc2239327c5edb3a432268e5831";
+      case "Optimism":
+        return "0x0b2c639c533813f4aa9d7837caf62653d097ff85";
+      case "Base":
+        return "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913";
+      case "Linea":
+        return "0x176211869ca2b568f2a7d4ee941e073a821ee1ff";
+      default:
+        throw new Error("Unsupported chain for USDC: " + chain);
+    }
+  }
+
+  throw new Error("Unsupported token: " + tokenName);
+}
 
 async function executePlan(sources, destination) {
   let { token, chain } = destination;
   const dstTokenAddress = getTokenAddress(token, chain);
   const dstChainId = getNetworkEnumForChain(chain);
 
-  console.log("111111111111111111111");
-
   const txhashes = [];
 
   const swapPromises = sources.map(async (source) => {
     let { token, chain, amount } = source;
     const srcTokenAddress = getTokenAddress(token, chain);
-    const srcAmount = 100000; // amount;
-
-    console.log("222222222222222222222: ", srcAmount);
+    // const srcAmount = token.includes("USDC")
+    //   ? 50000n
+    //   : ethers.parseEther(0.0004); // amount;
+    const srcAmount = amount;
 
     const sdk = getSDKForNetwork(chain);
     let srcChainId = getNetworkEnumForChain(chain);
 
-    console.log("approving tokens for source: ", srcTokenAddress);
-
     await approveTokens(chain, srcTokenAddress);
-    console.log("Executing swap for source: ", source);
+
+    // console.log("Executing swap for source: ", source);
+    // console.log("srcAmount: ", srcAmount);
+    // console.log("srcTokenAddress: ", srcTokenAddress);
+    // console.log("dstTokenAddress: ", dstTokenAddress);
+    // console.log("dstChainId: ", dstChainId);
+    // console.log("srcChainId: ", srcChainId);
 
     hash = await executeSwap(
       sdk,
@@ -125,7 +184,11 @@ async function executePlan(sources, destination) {
     return hash;
   });
 
-  await Promise.all(swapPromises);
+  await Promise.all(swapPromises).catch((error) => {
+    // console.error("Error in executePlan:", error);
+    // throw error;
+    throw new Error("Error in executePlan");
+  });
 
   return txhashes;
 }
@@ -160,15 +223,26 @@ const approveABI = [
 async function approveTokens(network, srcTokenAddress) {
   const AGGREGATION_ROUTER = "0x111111125421ca6dc452d289314280a0f8842a65"; // aggregation router v6
 
-  const nodeUrl = network == "Arbitrum" ? arbNodeUrl : opNodeUrl;
-  console.log("nodeUrl: ", nodeUrl);
+  let nodeUrl;
+  switch (network) {
+    case "Arbitrum":
+      nodeUrl = arbNodeUrl;
+      break;
+    case "Optimism":
+      nodeUrl = opNodeUrl;
+      break;
+    case "Base":
+      nodeUrl = baseNodeUrl;
+      break;
+    case "Linea":
+      nodeUrl = lineaNodeUrl;
+      break;
+    default:
+      throw new Error("Unsupported network: " + network);
+  }
   const provider = new JsonRpcProvider(nodeUrl);
   const wallet = new Wallet(makerPrivateKey, provider);
   const tkn = new Contract(srcTokenAddress, approveABI, wallet);
-
-  console.log("tkn: ", tkn);
-  console.log("srcTokenAddress: ", srcTokenAddress);
-  console.log("makerAddress: ", makerAddress, AGGREGATION_ROUTER);
 
   // Check current allowance
   const currentAllowance = await tkn.allowance(
@@ -176,11 +250,8 @@ async function approveTokens(network, srcTokenAddress) {
     AGGREGATION_ROUTER
   );
 
-  console.log("currentAllowance: ", currentAllowance);
-
   // Only approve if allowance is zero
   if (currentAllowance == 0n) {
-    console.log("Current allowance is zero, approving tokens...");
     await tkn.approve(
       AGGREGATION_ROUTER,
       2n ** 256n - 1n // unlimited allowance
@@ -197,10 +268,10 @@ async function executeSwap(
   dstChainId,
   srcTokenAddress,
   dstTokenAddress,
-  amount = 100000 // 0.01 USDC
+  amount // 0.01 USDC
 ) {
-  if (amount < 100000) {
-    amount = 100000;
+  if (!amount || amount < 100000n) {
+    amount = 100000n;
   }
 
   const invert = false;
@@ -227,7 +298,6 @@ async function executeSwap(
 
   try {
     const quote = await sdk.getQuote(params);
-    console.log("Received Fusion+ quote from 1inch API", quote.prices);
 
     const secretsCount = quote.getPreset().secretsCount;
     const secrets = Array.from({ length: secretsCount }).map(() =>
@@ -246,8 +316,6 @@ async function executeSwap(
               )
             )
           );
-
-    console.log("Received Fusion+ quote from 1inch API");
 
     const quoteResponse = await sdk.placeOrder(quote, {
       walletAddress: makerAddress,

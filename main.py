@@ -40,13 +40,13 @@ def chat():
     response, system_prompt = semantic_router.get_route_response(req_data["message"], route_category, wallet_address)
     print("Response: ", response)
 
-    # if route_category == "TOKEN_BRIDGE_PLAN":
-    #     aggregated_responses, model_outputs_by_round = consensus_engine.handle_user_input(req_data["message"], system_prompt)
-    #     print("Aggregated responses: ", aggregated_responses)
-    #     print("Model outputs by round: ", model_outputs_by_round)
-
-    aggregated_responses = None
-    model_outputs_by_round = None
+    if route_category == "TOKEN_BRIDGE_PLAN":
+        aggregated_responses, model_outputs_by_round = consensus_engine.handle_user_input(req_data["message"], system_prompt)
+        print("Aggregated responses: ", aggregated_responses)
+        print("Model outputs by round: ", model_outputs_by_round)
+    else:
+        aggregated_responses = None
+        model_outputs_by_round = None
 
     # items.append(new_item)  
     return jsonify({"route": route_category, 
@@ -58,23 +58,20 @@ def chat():
 @app.route('/api/execute_bridge_plan', methods=['POST'])  
 def execute_bridge_plan():
     req_data = request.json  
-    print(req_data)
+    # print(req_data)
 
     wallet_address = os.environ.get("ADDRESS")  
     balances_info = fetch_balances(wallet_address)
 
-    print("Balances info: ", balances_info)
+    # print("Balances info: ", balances_info)
 
     # Simple validation  
     if not req_data or not "message" in req_data:  
         return jsonify({"error": "Invalid request data"}), 400  
 
-    print("Request data: ", req_data)
-    print("source_tokens: ", req_data["message"]["source_tokens"])
-
     bridge_plan = req_data["message"]
 
-    print("Bridge plan: ", bridge_plan)
+    # print("\nBridge plan: ", bridge_plan)
     
     # Process source tokens with balances
     enriched_sources = []
@@ -102,7 +99,7 @@ def execute_bridge_plan():
         "destination": destination
     }
 
-    print("Enriched bridge plan: ", enriched_plan)
+    print("\nEnriched bridge plan: ", enriched_plan)
     
     # Call the Node.js server endpoint
     try:
