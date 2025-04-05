@@ -32,18 +32,12 @@ TOKENS_DECIMALS = {
 }
 
 TOKENS_NAMES = {
-    "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee": "ETH",
-    "0x4200000000000000000000000000000000000006": "WETH", 
+    "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee": "ETH", # AR and OP
+    "0x4200000000000000000000000000000000000006": "WETH", # ARB and OP
     "0xaf88d065e77c8cc2239327c5edb3a432268e5831": "USDC", # ARB
     "0x0b2c639c533813f4aa9d7837caf62653d097ff85": "USDC", # OP
 }
 
-TOKENS_ADDRESSES = {
-    "ETH": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
-    "WETH": "0x4200000000000000000000000000000000000006", 
-    "USDC-optimism": "0xaf88d065e77c8cc2239327c5edb3a432268e5831", # ARB
-    "USDC-arbitrum": "0x0b2c639c533813f4aa9d7837caf62653d097ff85", # OP
-}
 
 
 
@@ -61,7 +55,9 @@ def fetch_balances(wallet_address):
                 balance = float(balance)
                 if balance > 0:
                     token_name = TOKENS_NAMES[token] if token in TOKENS_NAMES else token
-                    balances.append({"tokenName": token_name, "balance": balance / 10**TOKENS_DECIMALS[token]})
+                    balances.append({"tokenName": token_name, 
+                                     "balance": balance / 10**TOKENS_DECIMALS[token], 
+                                     "scaledBalance": balance})
 
             if balances:
                 chain_balances[chain["name"]] = balances

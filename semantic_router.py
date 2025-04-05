@@ -11,22 +11,17 @@ Available Categories (ranked by priority):
    • Trigger words: find, my tokens, my balances, my funds, where do I have, etc.
    • Indicates the user wants to know the balances of their tokens on different chains
 
-2. SWAP_TOKEN
-   • Keywords: swap, trade, convert, exchange
-   • Applies when a user wants to convert one token to another
-   • User must mention both input and output tokens
-
-3. TOKEN_BRIDGE_PLAN  
-   • Keywords: consolidate, move, gather, bridge, combine, plan  
+2. TOKEN_BRIDGE_PLAN  
+   • Keywords: consolidate, move, swap, gather, bridge, combine, plan  
    • Applies when user wants to move multiple tokens (but not all!) to a single chain/token  
    • User must specify source chains and tokens and destination chain and token
    • Identifies intent to create a multi-step consolidation plan
 
-4. REQUEST_ATTESTATION
+3. REQUEST_ATTESTATION
    • Keywords: verify, attestation, proof, secure enclave
    • Applies to intent to verify data or perform trust validation
 
-5. CONVERSATIONAL (default fallback)
+4. CONVERSATIONAL (default fallback)
    • Used when the user's intent is unclear, casual, or doesn't map cleanly to any category
    • Includes greetings, general questions, or unclear commands
 
@@ -39,65 +34,6 @@ Instructions:
 - If ambiguous, default to CONVERSATIONAL
 """
 
-
-TOKEN_SWAP: Final = """
-Extract EXACTLY three pieces of information from the input for a token swap operation:
-
-1. SWAP AMOUNT
-   Number extraction rules:
-   • Convert written numbers to digits (e.g., "five" → 5.0)
-   • Handle decimal and integer inputs
-
-    response = semantic_router.get_route_response(req_data["message"], route_category)
-    print(response)
-    
-     - Integer: "1", "100"
-     - With tokens: "0.05 Eth", "10 USDC"
-   • Extract first valid number only
-   • Amount MUST be positive
-   • FAIL if no valid amount found
-
-2. SOURCE TOKEN (from_token)
-   Valid formats:
-   • Native token: "ETH" or "eth"
-   • Listed pairs only: "USDC", "USDT", "WETH"
-   • Case-insensitive match
-   • Strip spaces and normalize to uppercase
-   • FAIL if token not recognized
-
-3. DESTINATION TOKEN (to_token)
-   Valid formats:
-   • Same rules as source token
-   • Must be different from source token
-   • FAIL if same as source token
-   • FAIL if token not recognized
-
-
-Input: ${user_input}
-
-Response format:
-{
-  "amount": <float_value>,
-  "from_token": "<UPPERCASE_TOKEN_SYMBOL>",
-  "to_token": "<UPPERCASE_TOKEN_SYMBOL>",
-
-}
-
-Processing rules:
-- All three fields MUST be present
-- DO NOT infer missing values
-- DO NOT allow same token pairs
-- Normalize token symbols to uppercase
-- Amount MUST be int or float type
-- Amount MUST be positive
-- FAIL if any value missing or invalid
-
-Examples:
-✓ "swap 100 ETH to USDC" → {"from_token": "ETH", "to_token": "USDC", "amount": 100.0}
-✓ "exchange 0.05 eth for usdc" → {"from_token": "ETH", "to_token": "USDC", "amount": 0.05}
-✗ "swap eth to eth" → FAIL (same token)
-✗ "swap tokens" → FAIL (missing amount)
-"""
 
 FOLLOW_UP_TOKEN_SWAP: Final = """
    Please provide the following information in your next response: ["amount", "from_token", "to_token"]
