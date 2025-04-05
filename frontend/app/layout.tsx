@@ -24,6 +24,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+
+      <head>
+        <title>7Inch AI Smart Wallet</title>
+        <meta name="description" content="A platform for consensus learning agents powered by 1Inch" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
