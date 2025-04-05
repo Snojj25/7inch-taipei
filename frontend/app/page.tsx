@@ -181,6 +181,18 @@ export default function Home() {
         };
       }
 
+      if (data.route == "FIND_BALANCES") {
+        console.log("FIND_BALANCES", data.response);
+
+        const formattedBalances = formatTokenBalances(data.response);
+
+        console.log("FORMATTED BALANCES", formattedBalances);
+
+        return {
+          response: formattedBalances,
+        };
+      }
+
       return data;
     } catch (error) {
       console.error("Error:", error);
@@ -233,6 +245,8 @@ export default function Home() {
 
   const handleExecuteBridgePlan = async (plan) => {
     try {
+      const t0 = time.time();
+
       console.log("PLAN", plan);
 
       // Extract the source tokens and destination from the plan
@@ -297,10 +311,7 @@ export default function Home() {
           destination,
         },
         order_hashes: responses.flatMap((r) => r.order_hashes || []),
-        time_elapsed: responses.reduce(
-          (sum, r) => sum + (r.time_elapsed || 0),
-          0
-        ),
+        time_elapsed: time.time() - t0,
       };
 
       console.log("COMBINED RESPONSES", combinedResponse);
@@ -349,11 +360,12 @@ export default function Home() {
       execution_status,
       response: bridgeDetails,
       order_hashes,
+      time_elapsed,
     } = response;
-    const { sources, destination } = bridgeDetails;
+    const { source_tokens, destination } = bridgeDetails;
 
     // Format source transactions
-    const sourcesList = sources
+    const sourcesList = source_tokens
       .map((source) => {
         const amount = source.float_amount
           ? `${source.float_amount.toLocaleString()} `
@@ -361,11 +373,6 @@ export default function Home() {
         return `- ${amount}**${source.token}** from ${source.chain}`;
       })
       .join("\n");
-
-    // Format destination
-    const destAmount = destination.amount
-      ? `${destination.amount.toLocaleString()} `
-      : "";
 
     // // Format order hashes in small gray text using markdown
     // console.log("ORDER HASHES", order_hashes);
@@ -378,11 +385,67 @@ export default function Home() {
 ${sourcesList}
 
 ## 📥 Destination
-Received **${destination.token}** on ${destination.chain}
+- Received **${destination.token}** on ${destination.chain}
+
+
+## 🕒 Time elapsed
+${time_elapsed}s
 
 ---
 *${execution_status}*
 `;
+  }
+
+  function formatTokenBalances(balances) {
+    // Create chain-wise breakdown
+    const chainSections = Object.entries(balances)
+      .map(([chain, tokens]) => {
+        const tokenList = tokens
+          .map(({ tokenName, balance }) => {
+            const formattedBalance = parseFloat(balance).toLocaleString(
+              undefined,
+              {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 6,
+              }
+            );
+            return `- **${formattedBalance}** ${tokenName}`;
+          })
+          .join("\n");
+
+        return `## ${chain}\n${tokenList}`;
+      })
+      .join("\n\n");
+
+    // Calculate token aggregates across all chains
+    const aggregates = {};
+    Object.values(balances).forEach((tokens) => {
+      tokens.forEach(({ tokenName, balance }) => {
+        aggregates[tokenName] =
+          (aggregates[tokenName] || 0) + parseFloat(balance);
+      });
+    });
+
+    // Format aggregates
+    const aggregateSection = Object.entries(aggregates)
+      .map(([token, total]) => {
+        const formattedTotal = total.toLocaleString(undefined, {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 6,
+        });
+        return `- **${formattedTotal}** ${token}`;
+      })
+      .join("\n");
+
+    return `# 💰 Token Balances
+
+${chainSections}
+
+## 📊 Total Across All Chains
+${aggregateSection}
+
+---
+*Balance snapshot as of ${new Date().toLocaleString()}*`;
   }
 
   function extractJsonFromMarkdown(markdownString) {
@@ -419,11 +482,11 @@ Received **${destination.token}** on ${destination.chain}
     return `
 # 🌉 Token Bridge Plan  
 
-## 📤 Source  
-Swapping from ${sourceMarkdown}
+## 📤 Source. swapping from: 
+${sourceMarkdown}
 
-## 📥 Destination  
-Swapping to **${destination.token}** on ${destination.chain}
+## 📥 Destination. Swapping to:  
+**${destination.token}** on ${destination.chain}
 
 ---  
 *Your tokens will be bridged according to this plan. The process may take a few minutes to complete.* `;
