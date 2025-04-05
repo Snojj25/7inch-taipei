@@ -5,12 +5,14 @@ from utils import models
 import json
 import os
 from dotenv import load_dotenv  
+from consensus import consensus_engine
 load_dotenv() 
 
 # Initialize Flask app  
 app = Flask(__name__)  
 
 semantic_router = SemanticRouter(models["gemini-1.5-flash"])
+
 
 # Home route  
 @app.route('/', methods=['GET'])  
@@ -19,7 +21,7 @@ def home():
 
 # POST new item  
 @app.route('/api/chat', methods=['POST'])  
-def add_item():
+def chat():
     req_data = request.json  
     print(req_data)
 
@@ -32,11 +34,38 @@ def add_item():
     route_category = semantic_router.route_request(req_data["message"])
     print("Route category: ", route_category)
 
-    response = semantic_router.get_route_response(req_data["message"], route_category, wallet_address)
+    response, system_prompt = semantic_router.get_route_response(req_data["message"], route_category, wallet_address)
     print("Response: ", response)
+
+    if route_category == "TOKEN_BRIDGE_PLAN":
+        aggregated_responses, model_outputs_by_round = consensus_engine.handle_user_input(req_data["message"], system_prompt)
+        print("Aggregated responses: ", aggregated_responses)
+        print("Model outputs by round: ", model_outputs_by_round)
+
+    # items.append(new_item)  
+    return jsonify({"route": route_category, 
+                    "response": response, 
+                    "aggregated_responses": aggregated_responses, 
+                    "model_outputs_by_round": model_outputs_by_round}), 201  
+
+# POST new item  
+@app.route('/api/execute_bridge_plan', methods=['POST'])  
+def execute_bridge_plan():
+    req_data = request.json  
+    print(req_data)
+
+    wallet_address = os.environ.get("ADDRESS")  
+
+    # Simple validation  
+    if not req_data or not "message" in req_data:  
+        return jsonify({"error": "Invalid request data"}), 400  
+
+
+    print("Executing bridge plan: ", req_data["message"])
+    
     
     # items.append(new_item)  
-    return jsonify({"route": route_category, "response": response}), 201  
+    return jsonify({"response": "Bridge plan executed"}), 201  
 
 # Enable CORS for demo purposes  
 @app.after_request  

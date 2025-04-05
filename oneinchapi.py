@@ -38,6 +38,13 @@ TOKENS_NAMES = {
     "0x0b2c639c533813f4aa9d7837caf62653d097ff85": "USDC", # OP
 }
 
+TOKENS_ADDRESSES = {
+    "ETH": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+    "WETH": "0x4200000000000000000000000000000000000006", 
+    "USDC-optimism": "0xaf88d065e77c8cc2239327c5edb3a432268e5831", # ARB
+    "USDC-arbitrum": "0x0b2c639c533813f4aa9d7837caf62653d097ff85", # OP
+}
+
 
 
 def fetch_balances(wallet_address):    
@@ -65,6 +72,10 @@ def fetch_balances(wallet_address):
     print(chain_balances)
 
     return chain_balances
+
+
+
+
 
 """ if __name__ == '__main__':  
     fetch_balances()   """

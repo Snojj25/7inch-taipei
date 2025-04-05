@@ -273,7 +273,7 @@ class SemanticRouter:
         history.add_system_message(system_prompt)
         history.add_user_message(user_message)
         response = self.model.send_message(history.get_history())
-        return response
+        return response, system_prompt
          
 
 
